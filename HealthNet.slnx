@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="../Project/HealthNetDb.Domain/HealthNetDb/HealthNetDb/HealthNetDb.csproj" />
+  <Project Path="HealthNetDb/HealthNetDb.csproj" />
   <Project Path="HealthNet/HealthNet.csproj" />
 </Solution>
