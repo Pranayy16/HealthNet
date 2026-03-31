@@ -11,6 +11,7 @@ using HealthNet.DTOs;
 using HealthNet.Repository.User;
 using System.Text.RegularExpressions;
 using HealthNet.Utility;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace HealthNet.Services.UserServices;
 
@@ -22,10 +23,10 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="repository">The user repository instance for data access.</param>
 
-        public UserService(IUserRepository repository)
-        {
-            _repository = repository;
-        }
+    public UserService(IUserRepository repository)
+    {
+        _repository = repository;
+    }
     // Login Service
     public async Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config)
     {
@@ -109,23 +110,23 @@ public class UserService : IUserService
 
     //Register a User
     public async Task<UserRegisterResponseDto> RegisterUser(UserRegisterRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) ||                 //Validating the user details 
+            string.IsNullOrWhiteSpace(request.Password) ||
+            string.IsNullOrWhiteSpace(request.ConfirmPassword) ||
+            string.IsNullOrWhiteSpace(request.RoleName))
         {
-            if (string.IsNullOrWhiteSpace(request.Email) ||                 //Validating the user details 
-                string.IsNullOrWhiteSpace(request.Password) ||
-                string.IsNullOrWhiteSpace(request.ConfirmPassword) ||
-                string.IsNullOrWhiteSpace(request.RoleName))
-            {
-                throw new ArgumentException("Invalid input");
-            }
-            if (request.Password != request.ConfirmPassword)                //validating wheather password and confirmpassword match
-            {
-                throw new ArgumentException("Passwords do not match");
-            }
-            request.Password =
-                BCrypt.Net.BCrypt.HashPassword(request.Password);           //Hashing the password and stroring in DB
-
-            return await _repository.RegisterUser(request);
+            throw new ArgumentException("Invalid input");
         }
+        if (request.Password != request.ConfirmPassword)                //validating wheather password and confirmpassword match
+        {
+            throw new ArgumentException("Passwords do not match");
+        }
+        request.Password =
+            BCrypt.Net.BCrypt.HashPassword(request.Password);           //Hashing the password and stroring in DB
+
+        return await _repository.RegisterUser(request);
+    }
 
 
     //Forgot Password Functionality
@@ -136,11 +137,11 @@ public class UserService : IUserService
     public async Task<(bool success, string message)> ResetPasswordAsync(ForgotPasswordDto dto)
     {
         try
-        {   
+        {
             // Steps for verification of new password
             if (dto.NewPassword != dto.ConfirmPassword)
             {
-                return (false, ForgotPasswordHelper.PasswordsDoNotMatch); 
+                return (false, ForgotPasswordHelper.PasswordsDoNotMatch);
             }
             // Validate Password Strength
             if (!IsValidPassword(dto.NewPassword))
@@ -164,16 +165,16 @@ public class UserService : IUserService
 
             return (true, ForgotPasswordHelper.PasswordUpdatedSuccess);
         }
-        catch 
+        catch
         {
             // Return the error message to the controller
-            return (false, ForgotPasswordHelper.GenericError); 
+            return (false, ForgotPasswordHelper.GenericError);
         }
     }
 
     public bool IsValidPassword(string password)
     {
-        if (string.IsNullOrEmpty(password) )
+        if (string.IsNullOrEmpty(password))
             return false;
 
         var pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$";
@@ -204,5 +205,40 @@ public class UserService : IUserService
             // If mapping or repository call fails, throw with a clear message
             throw new HealthNetException($"An error occurred while processing the user list. {ex.Message}");
         }
+    }
+
+    // Get User By Id Service
+    public async Task<Users?> GetUserByIdAsync(int id)
+    {
+        return await _repository.GetUserByIdAsync(id);
+    }
+
+    // Update User Service
+    /// <summary>
+    /// Updates the details of an existing user based on the provided user ID and update data transfer object (DTO).
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="dto"></param>
+    /// <returns>
+    /// If the user is updated successfully it return the user, otherwise it will return null if the user does not exist or is inactive.
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+
+    public async Task<Users?> UpdateUserAsync(int id, UpdateUserDto dto)
+    {
+        var user = await _repository.GetUserByIdAsync(id);
+
+        if (user == null)
+            throw new HealthNetException(UpdateHelper.UserNotFound);
+
+        if (!user.Status)
+            throw new HealthNetException(UpdateHelper.UserInactive);
+
+        user.Name = dto.Name;
+        user.Email = dto.Email;
+        user.Phone = dto.PhoneNumber;
+
+        await _repository.UpdateUserAsync(user);
+        return user;
     }
 }

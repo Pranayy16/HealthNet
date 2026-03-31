@@ -65,12 +65,6 @@ public class UserRepository : IUserRepository
         return await _context.Userss.FirstOrDefaultAsync(u => u.Email == email);
     }
 
-    public async Task UpdateUserAsync(Users user)
-    {
-        _context.Userss.Update(user);
-        await _context.SaveChangesAsync();
-    }
-
     /// <summary>
     /// Retrieves all users from the database, including both active and inactive users, along with their associated roles.
     /// </summary>
@@ -89,6 +83,48 @@ public class UserRepository : IUserRepository
         {
             // If DB query fails, throw with a clear message
             throw new HealthNetException($"An error occurred while fetching users from the database. {ex.Message}");
+        }
+    }
+
+    //Get user by id
+    /// <summary>
+    /// Retrieves a user entity from the database based on the provided user ID.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns>
+    /// The user entity corresponding to the provided ID, or null if not found.
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<Users?> GetUserByIdAsync(int id)
+    {
+        try
+        {
+            return await _context.Userss.FindAsync(id);
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Updates the details of an existing user in the database.
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns>
+    ///  It updates the user entity in the database based on the provided user.
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task UpdateUserAsync(Users user)
+    {
+        try
+        {
+            _context.Userss.Update(user);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException(ex.Message);
         }
     }
 }

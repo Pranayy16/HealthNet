@@ -140,5 +140,58 @@ namespace HealthNet.Controllers
                 data = users
             });
         }
+
+        // Update user details
+        /// <summary>
+        /// Updates the details of an existing user based on the provided user ID and update data transfer object (DTO).
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="dto"></param>
+        /// <returns>
+        /// If the user is updated successfully it return the user, otherwise it will return null if the user does not exist or is inactive.
+        /// </returns>
+        /// <exception cref="HealthNetException"></exception>
+        // Update user details
+        [HttpPost("update/{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
+        {
+            try
+            {
+                var user = await _userService.UpdateUserAsync(id, dto);
+                return Ok(user);
+            }
+            catch (HealthNetException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        // Get user by id
+        /// <summary>
+        /// Retrieves a user entity from the database based on the provided user ID.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns>
+        /// The user entity corresponding to the provided ID, or null if not found.
+        /// </returns>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUserById(int id)
+        {
+            try
+            {
+                var user = await _userService.GetUserByIdAsync(id);
+                return Ok(user);
+            }
+            catch (HealthNetException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
     }
 }
