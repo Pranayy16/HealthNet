@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="appsettings.json\" />
     <Folder Include="Controllers\" />
     <Folder Include="Services\" />
     <Folder Include="Services\UserServices\" />
